@@ -1,20 +1,28 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import Pagination from './pagination';
 
 function Content() {
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [postPerPage, setPostPerPage] = useState(10);
+
+  const indexOfLastPost = currentPage * postPerPage;
+  const indexOfFirstPost = indexOfLastPost - postPerPage;
+  const currentPost = data.slice(indexOfFirstPost, indexOfLastPost);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   useEffect(() => {
-    axios
-      .get('https://api.coinpaprika.com/v1/coins')
-      .then((res) => {
-        setData(res.data.splice(0, 10));
-        console.log(res.data.splice(0, 10).data.name);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    const fetchData = async () => {
+      setLoading(true);
+      const result = await axios.get('https://api.coinpaprika.com/v1/coins');
+      setData(result.data.slice(0, 50));
+      setLoading(false);
+    };
+    fetchData();
   }, []);
 
   return (
@@ -133,7 +141,7 @@ function Content() {
               </tr>
             </thead>
             <tbody>
-              {data.map((el, i) => (
+              {currentPost.map((el, i) => (
                 <tr
                   class="border-b dark:bg-gray-800 dark:border-gray-700 odd:bg-white even:bg-gray-50 odd:dark:bg-gray-800 even:dark:bg-gray-700"
                   key={i}
@@ -158,6 +166,14 @@ function Content() {
               ))}
             </tbody>
           </table>
+
+          <div className="mx-auto">
+            <Pagination
+              postPerPage={postPerPage}
+              totalPosts={data.length}
+              paginate={paginate}
+            />
+          </div>
         </div>
         {/* end main content */}
       </div>
